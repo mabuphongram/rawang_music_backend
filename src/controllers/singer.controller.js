@@ -1,4 +1,11 @@
 const Singer = require("../models/Singer");
+const { minioUpload } = require("../utils/minioUpload.util");
+
+async function withAvatar(body, file) {
+  if (!file) return body;
+  const objectName = await minioUpload("singer", file);
+  return { ...body, avatarUrl: objectName };
+}
 
 async function listSingers(req, res) {
   const singers = await Singer.find().sort({ createdAt: -1 });
@@ -12,12 +19,12 @@ async function getSinger(req, res) {
 }
 
 async function createSinger(req, res) {
-  const singer = await Singer.create(req.body);
+  const singer = await Singer.create(await withAvatar(req.body, req.file));
   res.status(201).json(singer);
 }
 
 async function updateSinger(req, res) {
-  const singer = await Singer.findByIdAndUpdate(req.params.id, req.body, {
+  const singer = await Singer.findByIdAndUpdate(req.params.id, await withAvatar(req.body, req.file), {
     new: true,
     runValidators: true,
   });

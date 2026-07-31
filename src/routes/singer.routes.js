@@ -1,4 +1,5 @@
 const express = require("express");
+const upload = require("../middleware/upload");
 const {
   listSingers,
   getSinger,
@@ -11,8 +12,8 @@ const router = express.Router();
 
 router.get("/", listSingers);
 router.get("/:id", getSinger);
-router.post("/", createSinger);
-router.put("/:id", updateSinger);
+router.post("/", upload.single("avatar"), createSinger);
+router.put("/:id", upload.single("avatar"), updateSinger);
 router.delete("/:id", deleteSinger);
 
 module.exports = router;
