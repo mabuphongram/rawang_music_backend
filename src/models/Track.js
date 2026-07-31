@@ -14,8 +14,6 @@ const trackSchema = new mongoose.Schema(
     audioUrl: { type: String, required: true },
     lyrics: { type: String, default: "" },
     genre: { type: String, default: "" },
-    isDownloaded: { type: Boolean, default: false },
-    isFavorite: { type: Boolean, default: false },
     playCount: { type: Number, default: 0 },
     hasKaraoke: { type: Boolean, default: false },
     karaokeAudioUrl: { type: String, default: null },

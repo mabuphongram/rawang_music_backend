@@ -78,8 +78,6 @@ const seedData = {
       audioUrl: "synth:440:600",
       lyrics: "[Rawang]\nPungye lagung, pangsi zong,\nKadu mu mado, goli so.\nRawang ka ring, zi mu ma,\nAba amya, nung kamo.\n\n[English Translation]\nWhen the golden harvest ripens in the valley,\nWe gather under the eternal snow peaks.\nPreserve our heritage with pride,\nFor future generations to hear our song.",
       genre: "Traditional Folk Ballad",
-      isDownloaded: true,
-      isFavorite: true,
       hasKaraoke: true,
       karaokeAudioUrl: "synth:karaoke:440:600",
     },
@@ -120,7 +118,6 @@ const seedData = {
       audioUrl: "synth:260:350",
       lyrics: "[Rawang]\nYupa yupa, zi nung ka,\nAnu ka ring, zong so.\n\n[English Translation]\nSleep peacefully little child,\nProtected by mother's ancient love.",
       genre: "Traditional Lullaby",
-      isFavorite: true,
     },
     // Album 2 (Singer: Seng Rawang) — index 1
     {
@@ -134,7 +131,6 @@ const seedData = {
       audioUrl: "synth:520:680",
       lyrics: "[Rawang]\nManau poi rung, zi mu ma,\nGoli so ring, Rawang ka.\n\n[English Translation]\nDance together at the Highland festival,\nJoy fills our ancestral hills.",
       genre: "Festive Folk",
-      isDownloaded: true,
       hasKaraoke: true,
       karaokeAudioUrl: "synth:karaoke:520:680",
     },
@@ -174,7 +170,6 @@ const seedData = {
       audioUrl: "synth:300:420",
       lyrics: "[Rawang]\nShingla kadu, zong zi ma,\nRawang ka ring, ka ma.\n\n[English Translation]\nRecorded by the Cultural Association for heritage preservation.",
       genre: "Heritage Archive",
-      isDownloaded: true,
     },
     {
       albumIndex: 2,
@@ -213,34 +208,24 @@ const seedData = {
       genre: "Ritual Chant",
     },
     // Album 4 (Organization: Rawang Youth Heritage Choir) — index 3
-    { albumIndex: 3, title: "Mountains Rejoice Choir", rawangTitle: "Razi Lagung Choir", artistName: "Rawang Youth Choir", albumName: "Northern Valley Choral Hymns", ownerType: "organization", durationSeconds: 245, audioUrl: "synth:400:550", lyrics: "[Four-Part Rawang Polyphonic Harmony]", genre: "Choral Hymn", isFavorite: true },
+    { albumIndex: 3, title: "Mountains Rejoice Choir", rawangTitle: "Razi Lagung Choir", artistName: "Rawang Youth Choir", albumName: "Northern Valley Choral Hymns", ownerType: "organization", durationSeconds: 245, audioUrl: "synth:400:550", lyrics: "[Four-Part Rawang Polyphonic Harmony]", genre: "Choral Hymn" },
     { albumIndex: 3, title: "Grace Over Valley", rawangTitle: "Hka Wang Grace", artistName: "Rawang Youth Choir", albumName: "Northern Valley Choral Hymns", ownerType: "organization", durationSeconds: 210, audioUrl: "synth:360:480", lyrics: "[Sacred Gospel Harmony]", genre: "Choral Hymn" },
     // Album 5 (Anonymous) — index 4
-    { albumIndex: 4, title: "Ancient Pine Ridge Ritual", rawangTitle: "Pungye Ritual Chant", artistName: "Traditional Ancestors", albumName: "Ancient River Chants & Rituals", ownerType: "anonymous", durationSeconds: 295, audioUrl: "synth:220:330", lyrics: "[Ancient Oral Tradition Passed Through Generations]", genre: "Ritual Chant", isDownloaded: true },
+    { albumIndex: 4, title: "Ancient Pine Ridge Ritual", rawangTitle: "Pungye Ritual Chant", artistName: "Traditional Ancestors", albumName: "Ancient River Chants & Rituals", ownerType: "anonymous", durationSeconds: 295, audioUrl: "synth:220:330", lyrics: "[Ancient Oral Tradition Passed Through Generations]", genre: "Ritual Chant" },
     { albumIndex: 4, title: "Solitary Hunter's Echo", rawangTitle: "Hkamti Echo", artistName: "Highland Nomads", albumName: "Ancient River Chants & Rituals", ownerType: "anonymous", durationSeconds: 205, audioUrl: "synth:250:370", lyrics: "[Highland Echo Call]", genre: "Traditional Call" },
     // Album 6 (Anonymous) — index 5
-    { albumIndex: 5, title: "Pung-Lu Bamboo Flute Melody", rawangTitle: "Pung-Lu Solos", artistName: "Anonymous Bamboo Master", albumName: "Bamboo Harp & Flute Solos", ownerType: "anonymous", durationSeconds: 260, audioUrl: "synth:520:700", lyrics: "[Instrumental Bamboo Flute Performance]", genre: "Instrumental Solo", isDownloaded: true, isFavorite: true },
+    { albumIndex: 5, title: "Pung-Lu Bamboo Flute Melody", rawangTitle: "Pung-Lu Solos", artistName: "Anonymous Bamboo Master", albumName: "Bamboo Harp & Flute Solos", ownerType: "anonymous", durationSeconds: 260, audioUrl: "synth:520:700", lyrics: "[Instrumental Bamboo Flute Performance]", genre: "Instrumental Solo" },
     { albumIndex: 5, title: "Rawang Mouth Harp Echoes", rawangTitle: "Goli Mouth Harp", artistName: "Anonymous Highland Musician", albumName: "Bamboo Harp & Flute Solos", ownerType: "anonymous", durationSeconds: 175, audioUrl: "synth:600:800", lyrics: "[Instrumental Mouth Harp]", genre: "Instrumental Solo" },
     // Dummy albums 7–11 onwards follow same pattern (1 track each)
-    { albumIndex: 6, title: "Highland Morning", rawangTitle: "Dingsa Wang Rung", artistName: "John Singer", albumName: "John's Acoustic Hits", ownerType: "singer", durationSeconds: 203, audioUrl: "synth:320:480", lyrics: "[Details...]", genre: "Folk Ballad", isFavorite: true },
-    { albumIndex: 7, title: "Bamboo Wind Song", rawangTitle: "Pung Lung Rung", artistName: "Maria Artist", albumName: "Maria's Folk Songs", ownerType: "singer", durationSeconds: 195, audioUrl: "synth:440:620", lyrics: "[Details...]", genre: "Folk Ballad", isFavorite: true, hasKaraoke: true, karaokeAudioUrl: "synth:karaoke:440:620" },
-    { albumIndex: 8, title: "Echo of the Peaks", rawangTitle: "Hkakabo Larwi So", artistName: "David Vocals", albumName: "David Unplugged", ownerType: "singer", durationSeconds: 230, audioUrl: "synth:460:640", lyrics: "[Details...]", genre: "Acoustic Ballad", isFavorite: true },
-    { albumIndex: 9, title: "Singing By the Stream", rawangTitle: "Hka Rung Zong", artistName: "Sarah Melody", albumName: "Sarah's Classic Melodies", ownerType: "singer", durationSeconds: 210, audioUrl: "synth:480:660", lyrics: "[Details...]", genre: "Folk Ballad", isFavorite: true, hasKaraoke: true, karaokeAudioUrl: "synth:karaoke:480:660" },
-    { albumIndex: 10, title: "Starlight Over Nmai", rawangTitle: "Larwi Nmai So", artistName: "Peter Tune", albumName: "Peter's Evening Tunes", ownerType: "singer", durationSeconds: 218, audioUrl: "synth:370:530", lyrics: "[Details...]", genre: "Acoustic Ballad", isFavorite: true },
+    { albumIndex: 6, title: "Highland Morning", rawangTitle: "Dingsa Wang Rung", artistName: "John Singer", albumName: "John's Acoustic Hits", ownerType: "singer", durationSeconds: 203, audioUrl: "synth:320:480", lyrics: "[Details...]", genre: "Folk Ballad" },
+    { albumIndex: 7, title: "Bamboo Wind Song", rawangTitle: "Pung Lung Rung", artistName: "Maria Artist", albumName: "Maria's Folk Songs", ownerType: "singer", durationSeconds: 195, audioUrl: "synth:440:620", lyrics: "[Details...]", genre: "Folk Ballad", hasKaraoke: true, karaokeAudioUrl: "synth:karaoke:440:620" },
+    { albumIndex: 8, title: "Echo of the Peaks", rawangTitle: "Hkakabo Larwi So", artistName: "David Vocals", albumName: "David Unplugged", ownerType: "singer", durationSeconds: 230, audioUrl: "synth:460:640", lyrics: "[Details...]", genre: "Acoustic Ballad" },
+    { albumIndex: 9, title: "Singing By the Stream", rawangTitle: "Hka Rung Zong", artistName: "Sarah Melody", albumName: "Sarah's Classic Melodies", ownerType: "singer", durationSeconds: 210, audioUrl: "synth:480:660", lyrics: "[Details...]", genre: "Folk Ballad", hasKaraoke: true, karaokeAudioUrl: "synth:karaoke:480:660" },
+    { albumIndex: 10, title: "Starlight Over Nmai", rawangTitle: "Larwi Nmai So", artistName: "Peter Tune", albumName: "Peter's Evening Tunes", ownerType: "singer", durationSeconds: 218, audioUrl: "synth:370:530", lyrics: "[Details...]", genre: "Acoustic Ballad" },
     { albumIndex: 11, title: "Collective Harvest Hymn", rawangTitle: "Rung Lagung Zong", artistName: "Traditional Arts Ensemble", albumName: "Traditional Arts Compilation", ownerType: "organization", durationSeconds: 238, audioUrl: "synth:450:630", lyrics: "[Details...]", genre: "Choral Traditional" },
   ],
 
-  playlists: [
-    { name: "Cultural Favorites", description: "My saved Rawang songs for daily listening", iconName: "favorite" },
-    { name: "Offline Mountain Journey", description: "Tracks downloaded for listening without cellular connection", iconName: "download" },
-  ],
-
-  playlistTracks: [
-    // "Cultural Favorites" gets all favorite tracks (isFavorite: true)
-    { playlistName: "Cultural Favorites", trackIndicesToAdd: [] }, // filled in seed.js based on isFavorite
-    // "Offline Mountain Journey" gets all downloaded tracks (isDownloaded: true)
-    { playlistName: "Offline Mountain Journey", trackIndicesToAdd: [] }, // filled in seed.js based on isDownloaded
-  ],
+  playlists: [],
 
   chatMessages: [
     {

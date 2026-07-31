@@ -87,20 +87,10 @@ async function seed() {
     }
     console.log(`✅ Inserted ${tracks.length} tracks`);
 
-    // Create playlists and link tracks
+    // Create playlists
     const playlists = [];
     for (const playlistData of seedData.playlists) {
-      let trackIds = [];
-
-      if (playlistData.name === "Cultural Favorites") {
-        // Add all favorite tracks
-        trackIds = tracks.filter((t) => t.isFavorite).map((t) => t._id);
-      } else if (playlistData.name === "Offline Mountain Journey") {
-        // Add all downloaded tracks
-        trackIds = tracks.filter((t) => t.isDownloaded).map((t) => t._id);
-      }
-
-      const playlistDoc = await Playlist.create({ ...playlistData, trackIds });
+      const playlistDoc = await Playlist.create(playlistData);
       playlists.push(playlistDoc);
     }
     console.log(`✅ Inserted ${playlists.length} playlists with tracks`);
