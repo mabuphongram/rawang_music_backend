@@ -11,6 +11,7 @@ const albumSchema = new mongoose.Schema(
     ownerModel: { type: String, enum: ["Singer", "Organization"], required: false },
     ownerId: { type: mongoose.Schema.Types.ObjectId, required: false, refPath: "ownerModel" },
     coverResName: { type: String, default: "" },
+    coverImage: { type: String, default: "" },
     releaseYear: { type: Number, required: true },
     description: { type: String, default: "" },
     trackCount: { type: Number, default: 0 },

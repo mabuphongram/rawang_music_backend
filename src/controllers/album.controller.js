@@ -1,4 +1,15 @@
 const Album = require("../models/Album");
+const { minioUpload } = require("../utils/minioUpload.util");
+
+async function uploadCoverImage(album, file) {
+  if (!file) return;
+
+  album.coverImage = await minioUpload(
+    `albums/${album._id}`,
+    file,
+    "cover"
+  );
+}
 
 async function listAlbums(req, res) {
   const filter = {};
@@ -14,16 +25,21 @@ async function getAlbum(req, res) {
 }
 
 async function createAlbum(req, res) {
-  const album = await Album.create(req.body);
+  const album = new Album(req.body);
+  await album.validate();
+  await uploadCoverImage(album, req.file);
+  await album.save();
   res.status(201).json(album);
 }
 
 async function updateAlbum(req, res) {
-  const album = await Album.findByIdAndUpdate(req.params.id, req.body, {
-    new: true,
-    runValidators: true,
-  });
+  const album = await Album.findById(req.params.id);
   if (!album) return res.status(404).json({ error: "Album not found" });
+
+  album.set(req.body);
+  await album.validate();
+  await uploadCoverImage(album, req.file);
+  await album.save();
   res.json(album);
 }
 

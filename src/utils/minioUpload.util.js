@@ -51,9 +51,10 @@ function createMinioClient(config) {
  *
  * @param {string} objectPath Folder/key prefix in the bucket, for example "singer".
  * @param {Express.Multer.File} file File supplied by Multer.
+ * @param {string} [fileName] Optional object file name without its extension.
  * @returns {Promise<string>} The object key, for example "singer/<uuid>.jpg".
  */
-async function minioUpload(objectPath, file) {
+async function minioUpload(objectPath, file, fileName) {
   if (!file?.path) {
     const error = new Error("A Multer disk-storage file is required for MinIO upload");
     error.status = 400;
@@ -64,7 +65,8 @@ async function minioUpload(objectPath, file) {
   const client = createMinioClient(config);
   const prefix = String(objectPath || "").replace(/^\/+|\/+$/g, "");
   const originalExtension = path.extname(file.originalname || file.filename || "").toLowerCase();
-  const objectName = [prefix, `${randomUUID()}${originalExtension}`].filter(Boolean).join("/");
+  const name = fileName ? `${fileName}${originalExtension}` : `${randomUUID()}${originalExtension}`;
+  const objectName = [prefix, name].filter(Boolean).join("/");
 
   const bucketExists = await client.bucketExists(config.bucket);
   if (!bucketExists) await client.makeBucket(config.bucket, "us-east-1");
