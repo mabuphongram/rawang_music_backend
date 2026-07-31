@@ -8,6 +8,8 @@ const albumSchema = new mongoose.Schema(
     title: { type: String, required: true },
     ownerType: { type: String, enum: OWNER_TYPES, required: true },
     ownerName: { type: String, required: true },
+    ownerModel: { type: String, enum: ["Singer", "Organization"], required: false },
+    ownerId: { type: mongoose.Schema.Types.ObjectId, required: false, refPath: "ownerModel" },
     coverResName: { type: String, default: "" },
     releaseYear: { type: Number, required: true },
     description: { type: String, default: "" },
