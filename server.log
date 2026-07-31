@@ -1,0 +1,15 @@
+
+> rawang_music_backend@1.0.0 dev
+> node --watch src/server.js
+
+◇ injected env (1) from .env // tip: ⌘ custom filepath { path: '/custom/path/.env' }
+✅ MongoDB connected
+🚀 Server running on http://localhost:5000
+(node:6740) [MONGOOSE] Warning: mongoose: the `new` option for `findOneAndUpdate()` and `findOneAndReplace()` is deprecated. Use `returnDocument: 'after'` instead.
+(Use `node --trace-warnings ...` to show where the warning was created)
+Restarting 'src/server.js'
+◇ injected env (1) from .env // tip: ⌘ multiple files { path: ['.env.local', '.env'] }
+✅ MongoDB connected
+🚀 Server running on http://localhost:5000
+(node:8748) [MONGOOSE] Warning: mongoose: the `new` option for `findOneAndUpdate()` and `findOneAndReplace()` is deprecated. Use `returnDocument: 'after'` instead.
+(Use `node --trace-warnings ...` to show where the warning was created)
