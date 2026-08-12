@@ -91,6 +91,11 @@ async function incrementPlayCount(req, res) {
   res.json({ playCount: track.playCount });
 }
 
+async function getPopularTracks(req, res) {
+  const tracks = await Track.find().sort({ playCount: -1 }).limit(10);
+  res.json(tracks);
+}
+
 module.exports = {
   listTracks,
   getTrack,
@@ -98,4 +103,5 @@ module.exports = {
   updateTrack,
   deleteTrack,
   incrementPlayCount,
+  getPopularTracks,
 };

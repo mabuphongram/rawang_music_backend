@@ -7,11 +7,13 @@ const {
   updateTrack,
   deleteTrack,
   incrementPlayCount,
+  getPopularTracks,
 } = require("../controllers/track.controller");
 
 const router = express.Router();
 
 router.get("/", listTracks);
+router.get("/popular", getPopularTracks);
 router.get("/:id", getTrack);
 const trackUpload = upload.fields([
   { name: "audioUrl", maxCount: 1 },
