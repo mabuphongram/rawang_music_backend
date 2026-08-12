@@ -13,6 +13,15 @@ function getUploadedFile(files, fieldName) {
   return files?.[fieldName]?.[0];
 }
 
+function getTrackPayload(body) {
+  const { composerName, ...trackFields } = body;
+
+  return {
+    ...trackFields,
+    ...(composerName !== undefined ? { composerName } : {}),
+  };
+}
+
 async function uploadTrackAudio(track, files) {
   const audioFile = getUploadedFile(files, "audioUrl");
   const karaokeFile = getUploadedFile(files, "karaokeAudioUrl");
@@ -43,7 +52,7 @@ async function getTrack(req, res) {
 }
 
 async function createTrack(req, res) {
-  const track = new Track(req.body);
+  const track = new Track(getTrackPayload(req.body));
   const audioFile = getUploadedFile(req.files, "audioUrl");
 
   // A file will replace this placeholder before the document is saved.
@@ -59,7 +68,7 @@ async function updateTrack(req, res) {
   const track = await Track.findById(req.params.id);
   if (!track) return res.status(404).json({ error: "Track not found" });
 
-  track.set(req.body);
+  track.set(getTrackPayload(req.body));
   await track.validate();
   await uploadTrackAudio(track, req.files);
   await track.save();

@@ -8,6 +8,7 @@ const trackSchema = new mongoose.Schema(
     title: { type: String, required: true },
     rawangTitle: { type: String, default: "" },
     artistName: { type: String, required: true },
+    composerName: { type: String, default: "" },
     albumName: { type: String, required: true },
     ownerType: { type: String, enum: OWNER_TYPES, required: true },
     durationSeconds: { type: Number, required: true },
