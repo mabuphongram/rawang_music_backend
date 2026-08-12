@@ -81,10 +81,21 @@ async function deleteTrack(req, res) {
   res.status(204).send();
 }
 
+async function incrementPlayCount(req, res) {
+  const track = await Track.findByIdAndUpdate(
+    req.params.id,
+    { $inc: { playCount: 1 } },
+    { new: true }
+  );
+  if (!track) return res.status(404).json({ error: "Track not found" });
+  res.json({ playCount: track.playCount });
+}
+
 module.exports = {
   listTracks,
   getTrack,
   createTrack,
   updateTrack,
   deleteTrack,
+  incrementPlayCount,
 };

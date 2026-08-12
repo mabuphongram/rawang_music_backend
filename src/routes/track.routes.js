@@ -6,6 +6,7 @@ const {
   createTrack,
   updateTrack,
   deleteTrack,
+  incrementPlayCount,
 } = require("../controllers/track.controller");
 
 const router = express.Router();
@@ -18,6 +19,7 @@ const trackUpload = upload.fields([
 ]);
 
 router.post("/", trackUpload, createTrack);
+router.post("/:id/play", incrementPlayCount);
 router.put("/:id", trackUpload, updateTrack);
 router.delete("/:id", deleteTrack);
 
