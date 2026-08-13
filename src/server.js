@@ -1,7 +1,10 @@
-require("dotenv").config();
-
 const http = require("http");
+const path = require("path");
 const { Server } = require("socket.io");
+
+// Load the backend's configuration regardless of the directory from which the
+// process was started. Values provided by Docker/the host still take priority.
+require("dotenv").config({ path: path.resolve(__dirname, "..", ".env") });
 
 const app = require("./app");
 const connectDB = require("./config/db");
