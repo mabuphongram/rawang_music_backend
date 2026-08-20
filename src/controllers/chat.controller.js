@@ -24,15 +24,16 @@ async function listMessages(req, res) {
 
 async function createMessage(req, res) {
   try {
-    const message = await ChatMessage.create(req.body);
+    const { senderName, message, isUser } = req.body;
+    const newMessage = await ChatMessage.create({ senderName, message, isUser });
     
     // Broadcast to connected clients
     const io = req.app.get("io");
     if (io) {
-      io.to("rawang-community-chat").emit("new_message", message);
+      io.to("rawang-community-chat").emit("new_message", newMessage);
     }
     
-    res.status(201).json(message);
+    res.status(201).json(newMessage);
   } catch (error) {
     console.error("Error creating message:", error);
     res.status(500).json({ error: "Failed to create message" });

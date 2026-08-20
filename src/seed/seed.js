@@ -95,15 +95,10 @@ async function seed() {
     }
     console.log(`✅ Inserted ${playlists.length} playlists with tracks`);
 
-    // Insert chat messages with track refs
-    const trackMap = Object.fromEntries(tracks.map((t) => [t.title, t._id]));
+    // Insert chat messages
     const messages = [];
     for (const msgData of seedData.chatMessages) {
-      let attachedTrackId = null;
-      if (msgData.attachedTrackTitle && trackMap[msgData.attachedTrackTitle]) {
-        attachedTrackId = trackMap[msgData.attachedTrackTitle];
-      }
-      const msgDoc = await ChatMessage.create({ ...msgData, attachedTrackId });
+      const msgDoc = await ChatMessage.create(msgData);
       messages.push(msgDoc);
     }
     console.log(`✅ Inserted ${messages.length} chat messages`);

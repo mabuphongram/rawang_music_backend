@@ -238,8 +238,6 @@ const seedData = {
       senderName: "Seng Hkawn (Myitkyina)",
       message: "I am so happy to see old traditional bamboo flute songs preserved here! Check out 'Pungye Harvest Song'!",
       timestamp: Date.now() - 86400000,
-      attachedTrackTitle: "Pungye Harvest Song",
-      trackSearchBy: "title", // will resolve to actual trackId in seed.js
       isUser: false,
     },
     {
