@@ -9,6 +9,7 @@ const playlistRoutes = require("./routes/playlist.routes");
 const chatRoutes = require("./routes/chat.routes");
 const singerRoutes = require("./routes/singer.routes");
 const organizationRoutes = require("./routes/organization.routes");
+const authRoutes = require("./routes/auth.routes");
 
 const app = express();
 
@@ -26,6 +27,7 @@ app.get("/health", (req, res) => {
 });
 
 // Routes
+app.use("/api/auth", authRoutes);
 app.use("/api/uploads", uploadRoutes);
 app.use("/api/albums", albumRoutes);
 app.use("/api/tracks", trackRoutes);
