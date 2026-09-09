@@ -13,6 +13,20 @@ const PORT = process.env.PORT || 5000;
 
 async function start() {
   await connectDB();
+
+  // One-time migration: single albumId -> albumIds array (many-to-many)
+  try {
+    const Track = require("./models/Track");
+    const result = await Track.updateMany(
+      { albumIds: { $exists: false } },
+      [{ $set: { albumIds: ["$albumId"] } }]
+    );
+    if (result.modifiedCount > 0) {
+      console.log(`🔄 Migrated ${result.modifiedCount} tracks to albumIds`);
+    }
+  } catch (err) {
+    console.warn(`Track albumIds migration skipped: ${err.message}`);
+  }
   
   const server = http.createServer(app);
   

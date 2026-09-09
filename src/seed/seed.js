@@ -88,7 +88,8 @@ async function seed() {
     const tracks = [];
     for (const trackData of seedData.tracksWithAlbumRef) {
       const albumId = albums[trackData.albumIndex]._id;
-      const trackDoc = await Track.create({ ...trackData, albumId });
+      const { albumIndex, ...trackFields } = trackData;
+      const trackDoc = await Track.create({ ...trackFields, albumIds: [albumId] });
       tracks.push(trackDoc);
     }
     console.log(`✅ Inserted ${tracks.length} tracks`);

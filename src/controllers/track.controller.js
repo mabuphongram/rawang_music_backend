@@ -14,18 +14,40 @@ function getUploadedFile(files, fieldName) {
 }
 
 function getTrackPayload(body) {
-  const { composerName, ...trackFields } = body;
+  const { composerName, albumId, albumIds, ...trackFields } = body;
+  const ids = resolveAlbumIds(albumIds, albumId);
 
   return {
     ...trackFields,
     ...(composerName !== undefined ? { composerName } : {}),
+    albumIds: ids,
+    // Legacy mirror: primary album is always albumIds[0].
+    ...(ids.length > 0 ? { albumId: ids[0] } : {}),
   };
+}
+
+// Accept albumIds as array, JSON string (FormData), or fall back to legacy albumId.
+function resolveAlbumIds(albumIds, albumId) {
+  let ids = albumIds;
+  if (typeof ids === "string") {
+    try {
+      ids = JSON.parse(ids);
+    } catch {
+      ids = [ids];
+    }
+  }
+  if (Array.isArray(ids) && ids.length > 0) {
+    return ids.map(String);
+  }
+  if (albumId) return [String(albumId)];
+  return [];
 }
 
 async function uploadTrackAudio(track, files) {
   const audioFile = getUploadedFile(files, "audioUrl");
   const karaokeFile = getUploadedFile(files, "karaokeAudioUrl");
-  const audioFolder = `albums/${track.albumId}/tracks`;
+  const primaryAlbumId = track.albumIds?.[0];
+  const audioFolder = `albums/${primaryAlbumId}/tracks`;
   const name = trackFileName(track.title);
 
   if (audioFile) {
@@ -40,7 +62,11 @@ async function uploadTrackAudio(track, files) {
 
 async function listTracks(req, res) {
   const filter = {};
-  if (req.query.albumId) filter.albumId = req.query.albumId;
+  if (req.query.albumId) {
+    // Match both new (albumIds[]) and legacy (albumId) shapes so the
+    // filter works whether or not the startup migration has backfilled.
+    filter.$or = [{ albumIds: req.query.albumId }, { albumId: req.query.albumId }];
+  }
   const tracks = await Track.find(filter).sort({ createdAt: 1 });
   res.json(tracks);
 }
@@ -54,9 +80,12 @@ async function getTrack(req, res) {
 async function createTrack(req, res) {
   const track = new Track(getTrackPayload(req.body));
   const audioFile = getUploadedFile(req.files, "audioUrl");
-
   // A file will replace this placeholder before the document is saved.
   if (audioFile && !track.audioUrl) track.audioUrl = "__pending_minio_upload__";
+
+  if (!track.albumIds || track.albumIds.length === 0) {
+    return res.status(400).json({ error: "A track must belong to at least one album" });
+  }
 
   await track.validate();
   await uploadTrackAudio(track, req.files);
@@ -69,6 +98,9 @@ async function updateTrack(req, res) {
   if (!track) return res.status(404).json({ error: "Track not found" });
 
   track.set(getTrackPayload(req.body));
+  if (!track.albumIds || track.albumIds.length === 0) {
+    return res.status(400).json({ error: "A track must belong to at least one album" });
+  }
   await track.validate();
   await uploadTrackAudio(track, req.files);
   await track.save();
