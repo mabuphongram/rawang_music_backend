@@ -26,12 +26,23 @@ async function start() {
   // Make io accessible in controllers
   app.set("io", io);
 
+  // ── Online presence tracking ─────────────────────────────────────────
+  const onlineSockets = new Set();
+
+  function broadcastOnlineCount() {
+    io.emit("online_count", onlineSockets.size);
+  }
+
   io.on("connection", (socket) => {
-    console.log("A user connected to chat socket");
+    onlineSockets.add(socket.id);
+    console.log(`Socket connected: ${socket.id} (online: ${onlineSockets.size})`);
     socket.join("rawang-community-chat");
-    
+    broadcastOnlineCount();
+
     socket.on("disconnect", () => {
-      console.log("User disconnected from chat socket");
+      onlineSockets.delete(socket.id);
+      console.log(`Socket disconnected: ${socket.id} (online: ${onlineSockets.size})`);
+      broadcastOnlineCount();
     });
   });
 
