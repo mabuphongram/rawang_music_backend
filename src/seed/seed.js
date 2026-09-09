@@ -6,6 +6,7 @@ const Playlist = require("../models/Playlist");
 const ChatMessage = require("../models/ChatMessage");
 const Singer = require("../models/Singer");
 const Organization = require("../models/Organization");
+const HeroSlide = require("../models/HeroSlide");
 const connectDB = require("../config/db");
 const seedData = require("./seedData");
 
@@ -44,6 +45,11 @@ async function seed() {
       await Organization.collection.drop();
     } catch (err) {
       if (err.code !== 26) throw err;
+    }
+    try {
+      await HeroSlide.collection.drop();
+    } catch (err) {
+      if (err.code !== 26) throw err; // 26 = namespace not found
     }
     console.log("✅ Cleared collections");
 
@@ -102,6 +108,10 @@ async function seed() {
       messages.push(msgDoc);
     }
     console.log(`✅ Inserted ${messages.length} chat messages`);
+
+    // Insert hero slides (home carousel)
+    const heroSlides = await HeroSlide.insertMany(seedData.heroSlides || []);
+    console.log(`✅ Inserted ${heroSlides.length} hero slides`);
 
     console.log("✅ Seed completed successfully!");
     process.exit(0);

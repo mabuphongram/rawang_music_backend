@@ -227,8 +227,28 @@ const seedData = {
 
   playlists: [],
 
-  chatMessages: [
+  heroSlides: [
     {
+      eyebrow: "RAWANG HERITAGE MUSIC",
+      title: "Preserving Our Ancestral Echoes",
+      subtitle: "Stream, download offline, and discover traditional songs.",
+      imageUrl: "",
+      durationSeconds: 7,
+      order: 0,
+      isActive: true,
+    },
+    {
+      eyebrow: "RAWANG HERITAGE MUSIC",
+      title: "Shvngbe sv̀ng Pàmvrà",
+      subtitle: "Mvkúnrì ayv́ng hapshì lúnshìe",
+      imageUrl: "",
+      durationSeconds: 6,
+      order: 1,
+      isActive: true,
+    },
+  ],
+
+  chatMessages: [    {
       senderName: "Ah Dang (Putao)",
       message: "Shingla kadoo! Welcome to the Rawang Music preservation platform!",
       timestamp: Date.now() - 86400000 * 2,
