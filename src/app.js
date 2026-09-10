@@ -10,6 +10,7 @@ const chatRoutes = require("./routes/chat.routes");
 const singerRoutes = require("./routes/singer.routes");
 const organizationRoutes = require("./routes/organization.routes");
 const heroSlideRoutes = require("./routes/heroSlide.routes");
+const contributionRoutes = require("./routes/contribution.routes");
 const authRoutes = require("./routes/auth.routes");
 
 const app = express();
@@ -37,6 +38,7 @@ app.use("/api/chat", chatRoutes);
 app.use("/api/singers", singerRoutes);
 app.use("/api/organizations", organizationRoutes);
 app.use("/api/hero-slides", heroSlideRoutes);
+app.use("/api/contributions", contributionRoutes);
 
 // Error handler — express 5 forwards rejected async handlers here
 app.use((err, req, res, next) => {

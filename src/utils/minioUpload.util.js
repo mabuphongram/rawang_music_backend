@@ -83,4 +83,36 @@ async function minioUpload(objectPath, file, fileName) {
   return objectName;
 }
 
-module.exports = { minioUpload };
+/**
+ * Move an object within the bucket (copy + delete).
+ * Used to promote approved contributions: pending/<id>/... -> albums/<id>/tracks/...
+ *
+ * @param {string} srcKey Existing object key.
+ * @param {string} destKey Destination object key.
+ * @returns {Promise<string>} The destination key.
+ */
+async function minioMove(srcKey, destKey) {
+  const config = getMinioConfig();
+  const client = createMinioClient(config);
+  await client.statObject(config.bucket, srcKey);
+  await client.copyObject(config.bucket, destKey, `/${config.bucket}/${srcKey}`);
+  await client.removeObject(config.bucket, srcKey);
+  return destKey;
+}
+
+/**
+ * Best-effort single object delete (used when discarding contributions).
+ * Missing keys are ignored.
+ */
+async function minioRemoveObject(key) {
+  if (!key) return;
+  const config = getMinioConfig();
+  const client = createMinioClient(config);
+  try {
+    await client.removeObject(config.bucket, key);
+  } catch (error) {
+    if (error.code !== "NoSuchKey" && error.code !== "NotFound") throw error;
+  }
+}
+
+module.exports = { minioUpload, minioMove, minioRemoveObject };
