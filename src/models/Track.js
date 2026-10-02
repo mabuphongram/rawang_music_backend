@@ -17,6 +17,11 @@ const trackSchema = new mongoose.Schema(
     // Kept as a real field so old documents, old clients, and
     // ?albumId= filters keep working during and after migration.
     albumId: { type: mongoose.Schema.Types.ObjectId, ref: "Album", required: false },
+    // Ownership attached to each track (mirrored from the primary album).
+    // ownerId is null for anonymous tracks — their plays count as
+    // platform (unattributed) share, never owner earnings.
+    ownerId: { type: mongoose.Schema.Types.ObjectId, required: false, refPath: "ownerModel" },
+    ownerModel: { type: String, enum: ["Singer", "Organization"], required: false },
     title: { type: String, required: true },
     rawangTitle: { type: String, default: "" },
     artistName: { type: String, required: true },

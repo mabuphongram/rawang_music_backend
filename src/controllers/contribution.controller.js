@@ -120,6 +120,8 @@ async function approveContribution(req, res) {
   const track = new Track({
     albumIds,
     albumId: albumIds[0],
+    ownerId: firstAlbum.ownerId || null,
+    ownerModel: firstAlbum.ownerModel || null,
     title,
     rawangTitle: "",
     artistName,

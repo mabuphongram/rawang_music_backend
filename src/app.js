@@ -10,7 +10,12 @@ const chatRoutes = require("./routes/chat.routes");
 const singerRoutes = require("./routes/singer.routes");
 const organizationRoutes = require("./routes/organization.routes");
 const heroSlideRoutes = require("./routes/heroSlide.routes");
+const videoRoutes = require("./routes/video.routes");
 const contributionRoutes = require("./routes/contribution.routes");
+const ownerClaimRoutes = require("./routes/ownerClaim.routes");
+const ownerRequestRoutes = require("./routes/ownerRequest.routes");
+const analyticsRoutes = require("./routes/analytics.routes");
+const userRoutes = require("./routes/user.routes");
 const authRoutes = require("./routes/auth.routes");
 
 const app = express();
@@ -38,7 +43,12 @@ app.use("/api/chat", chatRoutes);
 app.use("/api/singers", singerRoutes);
 app.use("/api/organizations", organizationRoutes);
 app.use("/api/hero-slides", heroSlideRoutes);
+app.use("/api/videos", videoRoutes);
 app.use("/api/contributions", contributionRoutes);
+app.use("/api/owner-claims", ownerClaimRoutes);
+app.use("/api/owner-requests", ownerRequestRoutes);
+app.use("/api/analytics", analyticsRoutes);
+app.use("/api/users", userRoutes);
 
 // Error handler — express 5 forwards rejected async handlers here
 app.use((err, req, res, next) => {

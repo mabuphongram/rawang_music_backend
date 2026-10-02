@@ -49,7 +49,35 @@ const contributionUpload = multer({
   fileFilter: mp3Only,
 });
 
+// Owner-request avatars: images only, capped at 5 MB. Stored under the
+// MinIO pending/ prefix until the request is approved.
+const MAX_AVATAR_MB = Number(process.env.MAX_AVATAR_FILE_MB || 5);
+
+function imageOnly(req, file, cb) {
+  const ext = path.extname(file.originalname || "").toLowerCase();
+  const mime = (file.mimetype || "").toLowerCase();
+  // Extension is the reliable signal: some clients send valid images as
+  // application/octet-stream or vendor-specific image types.
+  const okExt = [".jpg", ".jpeg", ".png", ".webp"].includes(ext);
+  const okMime =
+    mime.startsWith("image/") || mime === "application/octet-stream" || mime === "";
+  if (okExt && okMime) return cb(null, true);
+  const err = new Error(
+    `Only JPG/PNG/WEBP images are accepted (got "${file.originalname}" as ${file.mimetype})`
+  );
+  err.status = 400;
+  cb(err);
+}
+
+const ownerRequestUpload = multer({
+  storage,
+  limits: { fileSize: MAX_AVATAR_MB * 1024 * 1024, files: 1 },
+  fileFilter: imageOnly,
+});
+
 module.exports = upload;
 module.exports.upload = upload;
 module.exports.contributionUpload = contributionUpload;
+module.exports.ownerRequestUpload = ownerRequestUpload;
 module.exports.MAX_CONTRIBUTION_MB = MAX_CONTRIBUTION_MB;
+module.exports.MAX_AVATAR_MB = MAX_AVATAR_MB;

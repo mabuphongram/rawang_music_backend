@@ -1,5 +1,6 @@
 const express = require("express");
 const upload = require("../middleware/upload");
+const { auth } = require("../middleware/auth");
 const {
   listTracks,
   getTrack,
@@ -21,7 +22,7 @@ const trackUpload = upload.fields([
 ]);
 
 router.post("/", trackUpload, createTrack);
-router.post("/:id/play", incrementPlayCount);
+router.post("/:id/play", auth(false), incrementPlayCount);
 router.put("/:id", trackUpload, updateTrack);
 router.delete("/:id", deleteTrack);
 

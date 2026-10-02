@@ -7,6 +7,8 @@ const organizationSchema = new mongoose.Schema(
     avatarUrl: { type: String, default: "" },
     description: { type: String, default: "" },
     phone: { type: String, default: "" },
+    // Proof/verification video links supplied at request time (min 5).
+    videoLinks: { type: [String], default: [] },
     socialLinks: {
       youtube: { type: String, default: "" },
       facebook: { type: String, default: "" },

@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const toJSON = require("../utils/toJSON");
+const { TRIAL_YEARS } = require("../config/business");
 
 const USER_ROLES = ["user", "artist", "admin"];
 const SUBSCRIPTION_PLANS = ["free", "one_month", "three_months", "one_year"];
@@ -19,7 +20,8 @@ const userSchema = new mongoose.Schema(
       trim: true,
       lowercase: true,
       sparse: true,
-      default: null,
+      // No default: the field must stay ABSENT when unset so the sparse
+      // unique index ignores email-less users (stored nulls would collide).
       match: [/^\S+@\S+\.\S+$/, "Invalid email format"],
     },
     name: { type: String, required: true, trim: true },
@@ -30,11 +32,13 @@ const userSchema = new mongoose.Schema(
     subscriptionStatus: { type: String, enum: SUBSCRIPTION_STATUS, default: "active" },
     subscriptionExpiresAt: {
       type: Date,
-      // Free tier 3-4 years: default 4 years from creation
-      default: () => new Date(Date.now() + 4 * 365 * 24 * 60 * 60 * 1000),
+      // Free trial from creation (then manual paid plans via admin)
+      default: () => new Date(Date.now() + TRIAL_YEARS * 365 * 24 * 60 * 60 * 1000),
     },
     subscriptionStartedAt: { type: Date, default: Date.now },
-    // manual payment tracking
+    // Single-session guard: bumped on every login / password change.
+    // Access tokens carry this number; mismatched tokens are rejected.
+    tokenVersion: { type: Number, default: 0 },
     lastPaymentAt: { type: Date, default: null },
     lastPaymentAmount: { type: Number, default: null },
     mustChangePassword: { type: Boolean, default: false },
@@ -43,15 +47,14 @@ const userSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// sparse unique for email only when present
-userSchema.index({ email: 1 }, { unique: true, sparse: true });
-
+// sparse unique for email only when present (declared inline on the path above)
 toJSON(userSchema);
 
 // hide passwordHash on toJSON even if selected
 userSchema.methods.toSafeObject = function () {
   const obj = this.toObject();
   delete obj.passwordHash;
+  delete obj.tokenVersion;
   return obj;
 };
 

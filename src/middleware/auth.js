@@ -17,6 +17,12 @@ function auth(required = true) {
       if (!user) return res.status(401).json({ error: "User not found" });
       // attach safe user
       req.user = user;
+      // Single-session guard: token stamped with an older tokenVersion
+      // means this account logged in elsewhere — kick this device.
+      // Tokens issued before the guard existed carry no v (treated as 0).
+      if ((payload.v ?? 0) !== (user.tokenVersion || 0)) {
+        return res.status(401).json({ error: "Logged in on another device", code: "SESSION_REVOKED" });
+      }
       // subscription gate: if expired, still allow browsing but block write/download
       const isExpired = user.subscriptionStatus === "expired" ||
         (user.subscriptionExpiresAt && new Date(user.subscriptionExpiresAt) < new Date());

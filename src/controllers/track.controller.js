@@ -1,4 +1,8 @@
 const Track = require("../models/Track");
+const Album = require("../models/Album");
+const Singer = require("../models/Singer");
+const Organization = require("../models/Organization");
+const PlayEvent = require("../models/PlayEvent");
 const { minioUpload } = require("../utils/minioUpload.util");
 
 function trackFileName(title) {
@@ -15,18 +19,60 @@ function getUploadedFile(files, fieldName) {
 
 function getTrackPayload(body) {
   const { composerName, albumId, albumIds, ...trackFields } = body;
-  const ids = resolveAlbumIds(albumIds, albumId);
+  // Album membership is only touched when the request carries album info —
+  // partial updates (e.g. ownership-only) must not wipe it.
+  const hasAlbums = albumIds !== undefined || albumId !== undefined;
+  const ids = hasAlbums ? resolveAlbumIds(albumIds, albumId) : undefined;
 
   return {
     ...trackFields,
     ...(composerName !== undefined ? { composerName } : {}),
-    albumIds: ids,
-    // Legacy mirror: primary album is always albumIds[0].
-    ...(ids.length > 0 ? { albumId: ids[0] } : {}),
+    ...(hasAlbums
+      ? { albumIds: ids, ...(ids.length > 0 ? { albumId: ids[0] } : {}) }
+      : {}),
   };
 }
 
-// Accept albumIds as array, JSON string (FormData), or fall back to legacy albumId.
+// Manual per-track attribution (Ownership tab): exactly one owner per
+// track. Explicit ownerId/ownerModel in the body always wins; otherwise
+// new tracks mirror the primary album, while updates leave an existing
+// attribution untouched (so catalogue edits never wipe manual ownership).
+// Detach by sending ownerId: null (track falls back to platform share).
+async function applyOwnership(track, body, { onUpdate = false } = {}) {
+  const explicit = body.ownerId !== undefined || body.ownerModel !== undefined;
+  if (!explicit) {
+    if (onUpdate && (track.ownerId || track.ownerModel)) return;
+    Object.assign(track, await resolveOwnership(track.albumIds));
+    return;
+  }
+  if (track.ownerId) {
+    if (track.ownerModel !== "Singer" && track.ownerModel !== "Organization") {
+      const err = new Error("ownerModel must be Singer or Organization when ownerId is set");
+      err.status = 400;
+      throw err;
+    }
+    const Model = track.ownerModel === "Singer" ? Singer : Organization;
+    const exists = await Model.exists({ _id: track.ownerId });
+    if (!exists) {
+      const err = new Error("Owner profile not found");
+      err.status = 400;
+      throw err;
+    }
+  } else {
+    track.ownerModel = null;
+  }
+}
+
+// Ownership snapshot from the primary album. Anonymous albums yield
+// null ownerId — their plays are platform share, never owner earnings.
+async function resolveOwnership(albumIds) {
+  if (!albumIds || albumIds.length === 0) return {};
+  const album = await Album.findById(albumIds[0])
+    .select("ownerId ownerModel")
+    .lean();
+  if (!album) return {};
+  return { ownerId: album.ownerId || null, ownerModel: album.ownerModel || null };
+}
 function resolveAlbumIds(albumIds, albumId) {
   let ids = albumIds;
   if (typeof ids === "string") {
@@ -67,6 +113,7 @@ async function listTracks(req, res) {
     // filter works whether or not the startup migration has backfilled.
     filter.$or = [{ albumIds: req.query.albumId }, { albumId: req.query.albumId }];
   }
+  if (req.query.ownerId) filter.ownerId = req.query.ownerId;
   const tracks = await Track.find(filter).sort({ createdAt: 1 });
   res.json(tracks);
 }
@@ -86,6 +133,7 @@ async function createTrack(req, res) {
   if (!track.albumIds || track.albumIds.length === 0) {
     return res.status(400).json({ error: "A track must belong to at least one album" });
   }
+  await applyOwnership(track, req.body);
 
   await track.validate();
   await uploadTrackAudio(track, req.files);
@@ -98,9 +146,14 @@ async function updateTrack(req, res) {
   if (!track) return res.status(404).json({ error: "Track not found" });
 
   track.set(getTrackPayload(req.body));
+  // Self-heal legacy docs that carry albumId but an empty albumIds array.
+  if ((!track.albumIds || track.albumIds.length === 0) && track.albumId) {
+    track.albumIds = [track.albumId];
+  }
   if (!track.albumIds || track.albumIds.length === 0) {
     return res.status(400).json({ error: "A track must belong to at least one album" });
   }
+  await applyOwnership(track, req.body, { onUpdate: true });
   await track.validate();
   await uploadTrackAudio(track, req.files);
   await track.save();
@@ -120,7 +173,29 @@ async function incrementPlayCount(req, res) {
     { new: true }
   );
   if (!track) return res.status(404).json({ error: "Track not found" });
-  res.json({ playCount: track.playCount });
+
+  // Verified play: ACTIVE subscribers earn owners money, max one
+  // counted event per user/track/day. Guests and expired accounts
+  // only move the raw popularity counter — free riders never dilute
+  // the royalty pool.
+  let counted = false;
+  if (req.user && req.isSubscriptionActive) {
+    const day = new Date().toISOString().slice(0, 10);
+    try {
+      await PlayEvent.create({
+        userId: req.user._id,
+        trackId: track._id,
+        ownerId: track.ownerId || null,
+        ownerType: track.ownerType,
+        ownerModel: track.ownerModel || undefined,
+        day,
+      });
+      counted = true;
+    } catch (err) {
+      if (err.code !== 11000) throw err; // duplicate = already counted today
+    }
+  }
+  res.json({ playCount: track.playCount, counted });
 }
 
 async function getPopularTracks(req, res) {

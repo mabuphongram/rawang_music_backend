@@ -7,11 +7,11 @@ const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "30d";
 const JWT_REFRESH_EXPIRES_IN = process.env.JWT_REFRESH_EXPIRES_IN || "365d";
 
 function signToken(user, expiresIn = JWT_EXPIRES_IN) {
-  return jwt.sign({ id: user._id, phone: user.phone, role: user.role }, JWT_SECRET, { expiresIn });
+  return jwt.sign({ id: user._id, phone: user.phone, role: user.role, v: user.tokenVersion ?? 0 }, JWT_SECRET, { expiresIn });
 }
 
 function signRefresh(user) {
-  return jwt.sign({ id: user._id, type: "refresh" }, JWT_SECRET, { expiresIn: JWT_REFRESH_EXPIRES_IN });
+  return jwt.sign({ id: user._id, type: "refresh", v: user.tokenVersion ?? 0 }, JWT_SECRET, { expiresIn: JWT_REFRESH_EXPIRES_IN });
 }
 
 // POST /api/auth/register
@@ -33,7 +33,8 @@ async function register(req, res) {
   const passwordHash = await bcrypt.hash(password, 10);
   const user = await User.create({
     phone: cleanPhone,
-    email: email ? email.trim().toLowerCase() : null,
+    // Omit email entirely when absent (never store null — see schema note).
+    ...(email ? { email: email.trim().toLowerCase() } : {}),
     name: name.trim(),
     avatarUrl: avatarUrl || "",
     passwordHash,
@@ -45,7 +46,7 @@ async function register(req, res) {
   res.status(201).json({ user: safe, token, refreshToken });
 }
 
-// POST /api/auth/login
+// POST /api/auth/login — bumps tokenVersion so any older session is kicked.
 async function login(req, res) {
   const { phone, password } = req.body;
   if (!phone || !password) return res.status(400).json({ error: "phone and password required" });
@@ -53,6 +54,9 @@ async function login(req, res) {
   if (!user) return res.status(401).json({ error: "Invalid phone or password" });
   const ok = await bcrypt.compare(password, user.passwordHash);
   if (!ok) return res.status(401).json({ error: "Invalid phone or password" });
+  // Bump only after a successful check — a failed guess must not kick the owner.
+  user.tokenVersion = (user.tokenVersion || 0) + 1;
+  await user.save();
   const token = signToken(user);
   const refreshToken = signRefresh(user);
   const safe = user.toSafeObject();
@@ -74,6 +78,10 @@ async function refresh(req, res) {
     if (payload.type !== "refresh") throw new Error("Not a refresh token");
     const user = await User.findById(payload.id);
     if (!user) return res.status(401).json({ error: "User not found" });
+    // A refresh token from a kicked session must not resurrect it.
+    if ((payload.v ?? 0) !== (user.tokenVersion || 0)) {
+      return res.status(401).json({ error: "Logged in on another device", code: "SESSION_REVOKED" });
+    }
     const token = signToken(user);
     const newRefresh = signRefresh(user);
     res.json({ token, refreshToken: newRefresh });
@@ -89,11 +97,11 @@ async function forgotRequest(req, res) {
   const user = await User.findOne({ phone: phone.trim() });
   if (!user) {
     // do not reveal existence
-    return res.json({ message: "If phone exists, admin will contact you. Please call 09xxx." });
+    return res.json({ message: "If this phone is registered, support will help you reset it." });
   }
   // Mark for admin visibility - set pending status hint
   // In production you could store ResetRequest collection; for now just respond
-  res.json({ message: "Request received. Please contact admin via 09xxx / Viber. Admin will reset within 24h." });
+  res.json({ message: "Request received. Contact support at rawangmelodies@gmail.com. Support will reset within 24h." });
 }
 
 // POST /api/auth/change-password (protected)
@@ -106,8 +114,11 @@ async function changePassword(req, res) {
   if (!ok) return res.status(401).json({ error: "Old password incorrect" });
   user.passwordHash = await bcrypt.hash(newPassword, 10);
   user.mustChangePassword = false;
+  // Password change kicks every session; return fresh tokens so this
+  // device stays logged in.
+  user.tokenVersion = (user.tokenVersion || 0) + 1;
   await user.save();
-  res.json({ message: "Password changed" });
+  res.json({ message: "Password changed", token: signToken(user), refreshToken: signRefresh(user) });
 }
 
 module.exports = { register, login, me, refresh, forgotRequest, changePassword };
