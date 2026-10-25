@@ -9,6 +9,7 @@ require("dotenv").config({ path: path.resolve(__dirname, "..", ".env") });
 const app = require("./app");
 const connectDB = require("./config/db");
 const business = require("./config/business");
+const presence = require("./realtime/presence");
 
 const PORT = process.env.PORT || 5000;
 
@@ -144,24 +145,14 @@ async function start() {
   app.set("io", io);
 
   // ── Online presence tracking ─────────────────────────────────────────
-  const onlineSockets = new Set();
-
-  function broadcastOnlineCount() {
-    io.emit("online_count", onlineSockets.size);
-  }
-
+  // Community chat still uses this room; presence registration is separate.
   io.on("connection", (socket) => {
-    onlineSockets.add(socket.id);
-    console.log(`Socket connected: ${socket.id} (online: ${onlineSockets.size})`);
     socket.join("rawang-community-chat");
-    broadcastOnlineCount();
-
-    socket.on("disconnect", () => {
-      onlineSockets.delete(socket.id);
-      console.log(`Socket disconnected: ${socket.id} (online: ${onlineSockets.size})`);
-      broadcastOnlineCount();
-    });
   });
+
+  // Tracks registered listeners, broadcasts the live count to all apps and
+  // streams the full (sanitized) online list to admin portal watchers.
+  presence.attach(io);
 
   server.listen(PORT, () => {
     console.log(`🚀 Server running on http://localhost:${PORT}`);

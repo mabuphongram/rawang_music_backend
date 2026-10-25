@@ -15,6 +15,7 @@ const contributionRoutes = require("./routes/contribution.routes");
 const ownerClaimRoutes = require("./routes/ownerClaim.routes");
 const ownerRequestRoutes = require("./routes/ownerRequest.routes");
 const analyticsRoutes = require("./routes/analytics.routes");
+const presenceRoutes = require("./routes/presence.routes");
 const userRoutes = require("./routes/user.routes");
 const authRoutes = require("./routes/auth.routes");
 
@@ -48,6 +49,7 @@ app.use("/api/contributions", contributionRoutes);
 app.use("/api/owner-claims", ownerClaimRoutes);
 app.use("/api/owner-requests", ownerRequestRoutes);
 app.use("/api/analytics", analyticsRoutes);
+app.use("/api/presence", presenceRoutes);
 app.use("/api/users", userRoutes);
 
 // Error handler — express 5 forwards rejected async handlers here
