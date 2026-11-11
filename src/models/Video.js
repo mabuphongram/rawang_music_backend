@@ -8,6 +8,7 @@ const videoSchema = new mongoose.Schema(
   {
     title: { type: String, required: true, trim: true },
     description: { type: String, default: "" },
+    category: { type: String, default: "Other", trim: true, maxlength: 60 },
     youtubeVideoId: {
       type: String,
       required: true,

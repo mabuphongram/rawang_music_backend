@@ -24,10 +24,11 @@ function parseDuration(v) {
 }
 
 function pickPayload(body) {
-  const { title, description, order, isPublished, durationSeconds, duration } = body || {};
+  const { title, description, category, order, isPublished, durationSeconds, duration } = body || {};
   const out = {};
   if (title !== undefined) out.title = String(title).trim();
   if (description !== undefined) out.description = String(description);
+  if (category !== undefined) out.category = String(category).trim() || "Other";
   if (order !== undefined) out.order = Number(order) || 0;
   if (isPublished !== undefined) out.isPublished = isPublished === true || isPublished === "true";
   if (durationSeconds !== undefined || duration !== undefined) {
@@ -40,6 +41,10 @@ async function listVideos(req, res) {
   const filter = {};
   if (req.query.isPublished !== undefined) {
     filter.isPublished = req.query.isPublished === "true";
+  }
+  if (req.query.category !== undefined) {
+    const category = String(req.query.category).trim();
+    if (category) filter.category = category;
   }
   const videos = await Video.find(filter).sort({ order: 1, createdAt: -1 });
   res.json(videos);
