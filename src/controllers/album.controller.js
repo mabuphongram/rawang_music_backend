@@ -1,5 +1,6 @@
 const Album = require("../models/Album");
 const { minioUpload } = require("../utils/minioUpload.util");
+const { notifyAlbumCreated } = require("../services/catalogNotifications.service");
 
 async function uploadCoverImage(album, file) {
   if (!file) return;
@@ -29,6 +30,7 @@ async function createAlbum(req, res) {
   await album.validate();
   await uploadCoverImage(album, req.file);
   await album.save();
+  notifyAlbumCreated(album);
   res.status(201).json(album);
 }
 

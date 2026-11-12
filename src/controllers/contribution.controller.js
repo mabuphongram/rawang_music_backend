@@ -3,6 +3,7 @@ const Album = require("../models/Album");
 const Track = require("../models/Track");
 const Contribution = require("../models/Contribution");
 const { minioUpload, minioMove, minioRemoveObject } = require("../utils/minioUpload.util");
+const { notifyTrackCreated } = require("../services/catalogNotifications.service");
 
 function sanitizeName(title) {
   return String(title || "untitled")
@@ -137,6 +138,7 @@ async function approveContribution(req, res) {
   });
   await track.validate();
   await track.save();
+  notifyTrackCreated(track);
 
   item.status = "approved";
   item.trackId = track._id;

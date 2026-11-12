@@ -4,6 +4,7 @@ const Singer = require("../models/Singer");
 const Organization = require("../models/Organization");
 const PlayEvent = require("../models/PlayEvent");
 const { minioUpload } = require("../utils/minioUpload.util");
+const { notifyTrackCreated } = require("../services/catalogNotifications.service");
 
 function trackFileName(title) {
   return String(title || "untitled")
@@ -138,6 +139,7 @@ async function createTrack(req, res) {
   await track.validate();
   await uploadTrackAudio(track, req.files);
   await track.save();
+  notifyTrackCreated(track);
   res.status(201).json(track);
 }
 

@@ -2,6 +2,7 @@ const Singer = require("../models/Singer");
 const Album = require("../models/Album");
 const Track = require("../models/Track");
 const { minioUpload } = require("../utils/minioUpload.util");
+const { notifySingerCreated } = require("../services/catalogNotifications.service");
 
 function parseSocialLinks(body) {
   let socialLinks = {};
@@ -120,6 +121,7 @@ async function createSinger(req, res) {
   const payload = await withAvatar(req.body, req.file);
   const singer = await Singer.create(payload);
   await attachStats(singer);
+  notifySingerCreated(singer);
   res.status(201).json(singer);
 }
 

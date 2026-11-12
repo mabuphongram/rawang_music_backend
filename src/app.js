@@ -18,6 +18,7 @@ const analyticsRoutes = require("./routes/analytics.routes");
 const presenceRoutes = require("./routes/presence.routes");
 const userRoutes = require("./routes/user.routes");
 const authRoutes = require("./routes/auth.routes");
+const notificationRoutes = require("./routes/notification.routes");
 
 const app = express();
 
@@ -51,6 +52,7 @@ app.use("/api/owner-requests", ownerRequestRoutes);
 app.use("/api/analytics", analyticsRoutes);
 app.use("/api/presence", presenceRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 // Error handler — express 5 forwards rejected async handlers here
 app.use((err, req, res, next) => {
