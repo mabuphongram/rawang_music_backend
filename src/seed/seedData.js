@@ -225,8 +225,6 @@ const seedData = {
     { albumIndex: 11, title: "Collective Harvest Hymn", rawangTitle: "Rung Lagung Zong", artistName: "Traditional Arts Ensemble", albumName: "Traditional Arts Compilation", ownerType: "organization", durationSeconds: 238, audioUrl: "synth:450:630", lyrics: "[Details...]", genre: "Choral Traditional" },
   ],
 
-  playlists: [],
-
   heroSlides: [
     {
       eyebrow: "RAWANG HERITAGE MUSIC",

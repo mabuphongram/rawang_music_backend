@@ -2,7 +2,6 @@ require("dotenv").config();
 
 const Album = require("../models/Album");
 const Track = require("../models/Track");
-const Playlist = require("../models/Playlist");
 const ChatMessage = require("../models/ChatMessage");
 const Singer = require("../models/Singer");
 const Organization = require("../models/Organization");
@@ -23,11 +22,6 @@ async function seed() {
     }
     try {
       await Track.collection.drop();
-    } catch (err) {
-      if (err.code !== 26) throw err;
-    }
-    try {
-      await Playlist.collection.drop();
     } catch (err) {
       if (err.code !== 26) throw err;
     }
@@ -94,13 +88,6 @@ async function seed() {
     }
     console.log(`✅ Inserted ${tracks.length} tracks`);
 
-    // Create playlists
-    const playlists = [];
-    for (const playlistData of seedData.playlists) {
-      const playlistDoc = await Playlist.create(playlistData);
-      playlists.push(playlistDoc);
-    }
-    console.log(`✅ Inserted ${playlists.length} playlists with tracks`);
 
     // Insert chat messages
     const messages = [];

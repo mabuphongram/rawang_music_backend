@@ -3,12 +3,17 @@ const path = require("path");
 const fs = require("fs/promises");
 const { randomUUID } = require("crypto");
 
-function getMinioConfig() {
-  const configuredEndpoint = process.env.MINIO_ENDPOINT;
-  const configuredPort = process.env.MINIO_PORT;
+function getStorageConfig() {
+  // Garage is S3-compatible. S3_* variables are preferred; the old MINIO_*
+  // names remain as a fallback so existing deployments keep working.
+  const configuredEndpoint = process.env.S3_ENDPOINT || process.env.MINIO_ENDPOINT;
+  const accessKey = process.env.S3_ACCESS_KEY || process.env.MINIO_ACCESS_KEY;
+  const secretKey = process.env.S3_SECRET_KEY || process.env.MINIO_SECRET_KEY;
+  const bucket = process.env.S3_BUCKET || process.env.MINIO_BUCKET;
+  const configuredPort = process.env.S3_PORT || process.env.MINIO_PORT;
 
-  if (!configuredEndpoint || !process.env.MINIO_ACCESS_KEY || !process.env.MINIO_SECRET_KEY || !process.env.MINIO_BUCKET) {
-    const error = new Error("MinIO environment variables are not fully configured");
+  if (!configuredEndpoint || !accessKey || !secretKey || !bucket) {
+    const error = new Error("S3/Garage storage environment variables are not fully configured");
     error.status = 500;
     throw error;
   }
@@ -16,38 +21,62 @@ function getMinioConfig() {
   const endpointUrl = configuredEndpoint.includes("://")
     ? new URL(configuredEndpoint)
     : new URL(`http://${configuredEndpoint}`);
-  const port = Number(configuredPort || endpointUrl.port || (endpointUrl.protocol === "https:" ? 443 : 80));
+  const port = Number(
+    configuredPort || endpointUrl.port || (endpointUrl.protocol === "https:" ? 443 : 80)
+  );
 
   if (!Number.isInteger(port) || port <= 0 || port > 65535) {
-    const error = new Error("MINIO_PORT must be a valid port number");
+    const error = new Error("S3 storage port must be a valid port number");
     error.status = 500;
     throw error;
   }
 
-  const useSSL = process.env.MINIO_USE_SSL === "true";
+  const sslFlag = process.env.S3_USE_SSL || process.env.MINIO_USE_SSL;
+  const useSSL = sslFlag === undefined
+    ? endpointUrl.protocol === "https:"
+    : sslFlag === "true";
 
   return {
     endpoint: endpointUrl.hostname,
     port,
     useSSL,
-    accessKey: process.env.MINIO_ACCESS_KEY,
-    secretKey: process.env.MINIO_SECRET_KEY,
-    bucket: process.env.MINIO_BUCKET,
+    region: process.env.S3_REGION || process.env.MINIO_REGION || "us-east-1",
+    accessKey,
+    secretKey,
+    bucket,
   };
 }
 
-function createMinioClient(config) {
+const MIME_BY_EXT = {
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
+  ".png": "image/png",
+  ".webp": "image/webp",
+  ".gif": "image/gif",
+  ".mp3": "audio/mpeg",
+  ".mp4": "video/mp4",
+};
+
+function resolveContentType(file, extension) {
+  const mime = String(file.mimetype || "").toLowerCase();
+  if (mime && mime !== "application/octet-stream") return mime;
+  return MIME_BY_EXT[extension] || "application/octet-stream";
+}
+
+function createStorageClient(config) {
   return new Minio.Client({
     endPoint: config.endpoint,
     port: config.port,
     useSSL: config.useSSL,
     accessKey: config.accessKey,
     secretKey: config.secretKey,
+    region: config.region,
+    pathStyle: true,
   });
 }
 
 /**
- * Upload a Multer disk-storage file to MinIO.
+ * Upload a Multer disk-storage file to S3/Garage-compatible storage.
  *
  * @param {string} objectPath Folder/key prefix in the bucket, for example "singer".
  * @param {Express.Multer.File} file File supplied by Multer.
@@ -56,26 +85,26 @@ function createMinioClient(config) {
  */
 async function minioUpload(objectPath, file, fileName) {
   if (!file?.path) {
-    const error = new Error("A Multer disk-storage file is required for MinIO upload");
+    const error = new Error("A Multer disk-storage file is required for S3 upload");
     error.status = 400;
     throw error;
   }
 
-  const config = getMinioConfig();
-  const client = createMinioClient(config);
+  const config = getStorageConfig();
+  const client = createStorageClient(config);
   const prefix = String(objectPath || "").replace(/^\/+|\/+$/g, "");
   const originalExtension = path.extname(file.originalname || file.filename || "").toLowerCase();
   const name = fileName ? `${fileName}${originalExtension}` : `${randomUUID()}${originalExtension}`;
   const objectName = [prefix, name].filter(Boolean).join("/");
 
   const bucketExists = await client.bucketExists(config.bucket);
-  if (!bucketExists) await client.makeBucket(config.bucket, "us-east-1");
+  if (!bucketExists) await client.makeBucket(config.bucket, config.region);
 
   await client.fPutObject(config.bucket, objectName, file.path, {
-    "Content-Type": file.mimetype || "application/octet-stream",
+    "Content-Type": resolveContentType(file, originalExtension),
   });
 
-  // Multer saved this file only as a staging step before the MinIO upload.
+  // Multer saved this file only as a staging step before the S3 upload.
   await fs.unlink(file.path).catch((error) => {
     console.warn(`Could not remove temporary upload ${file.path}: ${error.message}`);
   });
@@ -92,8 +121,8 @@ async function minioUpload(objectPath, file, fileName) {
  * @returns {Promise<string>} The destination key.
  */
 async function minioMove(srcKey, destKey) {
-  const config = getMinioConfig();
-  const client = createMinioClient(config);
+  const config = getStorageConfig();
+  const client = createStorageClient(config);
   await client.statObject(config.bucket, srcKey);
   await client.copyObject(config.bucket, destKey, `/${config.bucket}/${srcKey}`);
   await client.removeObject(config.bucket, srcKey);
@@ -106,8 +135,8 @@ async function minioMove(srcKey, destKey) {
  */
 async function minioRemoveObject(key) {
   if (!key) return;
-  const config = getMinioConfig();
-  const client = createMinioClient(config);
+  const config = getStorageConfig();
+  const client = createStorageClient(config);
   try {
     await client.removeObject(config.bucket, key);
   } catch (error) {
@@ -115,4 +144,9 @@ async function minioRemoveObject(key) {
   }
 }
 
-module.exports = { minioUpload, minioMove, minioRemoveObject };
+module.exports = {
+  minioUpload,
+  minioMove,
+  minioRemoveObject,
+  getStorageConfig,
+};

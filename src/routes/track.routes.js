@@ -3,6 +3,7 @@ const upload = require("../middleware/upload");
 const { auth } = require("../middleware/auth");
 const {
   listTracks,
+  listGenres,
   getTrack,
   createTrack,
   updateTrack,
@@ -15,6 +16,7 @@ const router = express.Router();
 
 router.get("/", listTracks);
 router.get("/popular", getPopularTracks);
+router.get("/genres", listGenres);
 router.get("/:id", getTrack);
 const trackUpload = upload.fields([
   { name: "audioUrl", maxCount: 1 },

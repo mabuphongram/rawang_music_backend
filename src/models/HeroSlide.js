@@ -4,7 +4,7 @@ const toJSON = require("../utils/toJSON");
 const heroSlideSchema = new mongoose.Schema(
   {
     eyebrow: { type: String, default: "" },
-    title: { type: String, required: true },
+    title: { type: String, default: "" },
     subtitle: { type: String, default: "" },
     imageUrl: { type: String, default: "" },
     durationSeconds: { type: Number, default: 6, min: 3, max: 60 },

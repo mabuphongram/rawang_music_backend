@@ -134,4 +134,8 @@ async function ownerTopTracks(req, res) {
   res.json(rows);
 }
 
-module.exports = { ownerSummary, ownerDaily, ownerTopTracks };
+module.exports = {
+  ownerSummary,
+  ownerDaily,
+  ownerTopTracks,
+};

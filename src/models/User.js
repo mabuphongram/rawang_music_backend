@@ -39,6 +39,10 @@ const userSchema = new mongoose.Schema(
     // Single-session guard: bumped on every login / password change.
     // Access tokens carry this number; mismatched tokens are rejected.
     tokenVersion: { type: Number, default: 0 },
+    // Permanent one-time album entitlements (admin-approved payments).
+    purchasedAlbumIds: [
+      { type: mongoose.Schema.Types.ObjectId, ref: "Album" },
+    ],
     lastPaymentAt: { type: Date, default: null },
     lastPaymentAmount: { type: Number, default: null },
     mustChangePassword: { type: Boolean, default: false },

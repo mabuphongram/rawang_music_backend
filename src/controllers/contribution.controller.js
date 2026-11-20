@@ -132,7 +132,7 @@ async function approveContribution(req, res) {
     durationSeconds: item.durationSeconds,
     audioUrl,
     lyrics: req.body.lyrics !== undefined ? String(req.body.lyrics) : "",
-    genre: (req.body.genre || "Cultural").trim(),
+    genre: (req.body.genre || "").trim(),
     hasKaraoke: Boolean(karaokeAudioUrl),
     karaokeAudioUrl,
   });

@@ -42,9 +42,10 @@ function getFirebaseApp() {
   });
 }
 
-function cleanText(value, field, maxLength) {
+function cleanText(value, field, maxLength, options = {}) {
   const text = String(value || "").trim();
   if (!text) {
+    if (options.optional) return "";
     const error = new Error(`${field} is required`);
     error.status = 400;
     throw error;
@@ -58,7 +59,9 @@ function cleanText(value, field, maxLength) {
 }
 
 async function sendBroadcast({ title, body, data }) {
-  const cleanTitle = cleanText(title, "Title", MAX_TITLE_LENGTH);
+  const cleanTitle = cleanText(title, "Title", MAX_TITLE_LENGTH, {
+    optional: true,
+  });
   const cleanBody = cleanText(body, "Body", MAX_BODY_LENGTH);
 
   const payloadData = {};
@@ -66,22 +69,18 @@ async function sendBroadcast({ title, body, data }) {
     if (value === undefined || value === null) continue;
     payloadData[key] = String(value);
   }
+  if (cleanTitle) payloadData.title = cleanTitle;
+  payloadData.body = cleanBody;
 
   const app = getFirebaseApp();
 
+  // Data-only: the app builds the notification locally so long messages use
+  // BigTextStyle and can be expanded instead of being truncated.
   return getMessaging(app).send({
     topic: ALL_USERS_TOPIC,
-    notification: {
-      title: cleanTitle,
-      body: cleanBody,
-    },
     data: payloadData,
     android: {
       priority: "high",
-      notification: {
-        channelId: "rawang_updates",
-        sound: "default",
-      },
     },
   });
 }

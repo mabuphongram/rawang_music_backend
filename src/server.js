@@ -16,6 +16,30 @@ const PORT = process.env.PORT || 5000;
 async function start() {
   await connectDB();
 
+  // One-time backfill: seed the popularity log from existing verified plays.
+  try {
+    const PlayEvent = require("./models/PlayEvent");
+    const TrackPlay = require("./models/TrackPlay");
+    const count = await TrackPlay.estimatedDocumentCount();
+    if (count === 0) {
+      const events = await PlayEvent.find()
+        .select("trackId userId playedAt")
+        .lean();
+      if (events.length > 0) {
+        await TrackPlay.insertMany(
+          events.map((event) => ({
+            trackId: event.trackId,
+            userId: event.userId || null,
+            playedAt: event.playedAt || new Date(),
+          }))
+        );
+        console.log(`Backfilled ${events.length} plays into popularity log`);
+      }
+    }
+  } catch (err) {
+    console.warn(`Popularity log backfill skipped: ${err.message}`);
+  }
+
   // One-time migration: single albumId -> albumIds array (many-to-many).
   // Covers both missing and empty arrays (partial writes could leave []).
   try {
@@ -29,6 +53,47 @@ async function start() {
     }
   } catch (err) {
     console.warn(`Track albumIds migration skipped: ${err.message}`);
+  }
+
+  // One-time migration: all existing albums stay published after adding
+  // the isPublished switch, so the app does not lose its catalogue.
+  try {
+    const Album = require("./models/Album");
+    const result = await Album.updateMany(
+      { isPublished: { $exists: false } },
+      { $set: { isPublished: true } }
+    );
+    if (result.modifiedCount > 0) {
+      console.log(`Migrated ${result.modifiedCount} albums to isPublished=true`);
+    }
+  } catch (err) {
+    console.warn(`Album isPublished migration skipped: ${err.message}`);
+  }
+
+  // One-time migration: give existing albums a stable display order.
+  try {
+    const Album = require("./models/Album");
+    const missing = await Album.find({
+      $or: [{ order: { $exists: false } }, { order: null }],
+    })
+      .select("_id")
+      .sort({ createdAt: 1 })
+      .lean();
+    if (missing.length > 0) {
+      const highestAlbum = await Album.find({ order: { $ne: null } })
+        .select("order")
+        .sort({ order: -1 })
+        .limit(1)
+        .lean();
+      const highest = Number(highestAlbum[0]?.order || 0);
+      let next = highest + 1;
+      for (const album of missing) {
+        await Album.updateOne({ _id: album._id }, { $set: { order: next++ } });
+      }
+      console.log(`Assigned display order to ${missing.length} albums`);
+    }
+  } catch (err) {
+    console.warn(`Album order migration skipped: ${err.message}`);
   }
 
   // One-time migration: attach ownership (ownerId/ownerModel) from the

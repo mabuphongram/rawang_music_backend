@@ -3,6 +3,7 @@ const Album = require("../models/Album");
 const Singer = require("../models/Singer");
 const Organization = require("../models/Organization");
 const PlayEvent = require("../models/PlayEvent");
+const TrackPlay = require("../models/TrackPlay");
 const { minioUpload } = require("../utils/minioUpload.util");
 const { notifyTrackCreated } = require("../services/catalogNotifications.service");
 
@@ -119,6 +120,20 @@ async function listTracks(req, res) {
   res.json(tracks);
 }
 
+// GET /tracks/genres - distinct non-empty genres for admin dropdowns.
+async function listGenres(req, res) {
+  const genres = await Track.distinct("genre");
+  const cleaned = [
+    ...new Set(
+      genres
+        .filter((genre) => typeof genre === "string")
+        .map((genre) => genre.trim())
+        .filter(Boolean)
+    ),
+  ].sort((a, b) => a.localeCompare(b));
+  res.json(cleaned);
+}
+
 async function getTrack(req, res) {
   const track = await Track.findById(req.params.id);
   if (!track) return res.status(404).json({ error: "Track not found" });
@@ -176,6 +191,15 @@ async function incrementPlayCount(req, res) {
   );
   if (!track) return res.status(404).json({ error: "Track not found" });
 
+  try {
+    await TrackPlay.create({
+      trackId: track._id,
+      userId: req.user?._id || null,
+    });
+  } catch (err) {
+    console.warn(`TrackPlay log skipped: ${err.message}`);
+  }
+
   // Verified play: ACTIVE subscribers earn owners money, max one
   // counted event per user/track/day. Guests and expired accounts
   // only move the raw popularity counter — free riders never dilute
@@ -201,12 +225,47 @@ async function incrementPlayCount(req, res) {
 }
 
 async function getPopularTracks(req, res) {
-  const tracks = await Track.find().sort({ playCount: -1 }).limit(10);
+  res.set("Cache-Control", "no-store");
+
+  const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+  const ranked = await TrackPlay.aggregate([
+    { $match: { playedAt: { $gte: since } } },
+    {
+      $group: {
+        _id: "$trackId",
+        recentPlays: { $sum: 1 },
+        lastPlayedAt: { $max: "$playedAt" },
+      },
+    },
+    { $sort: { recentPlays: -1, lastPlayedAt: -1 } },
+    { $limit: 10 },
+  ]);
+
+  const tracks = [];
+  if (ranked.length > 0) {
+    const ids = ranked.map((item) => item._id);
+    const found = await Track.find({ _id: { $in: ids } });
+    const byId = new Map(found.map((track) => [String(track._id), track]));
+    for (const item of ranked) {
+      const track = byId.get(String(item._id));
+      if (track) tracks.push(track);
+    }
+  }
+
+  if (tracks.length < 10) {
+    const ids = tracks.map((track) => track._id);
+    const fallback = await Track.find({ _id: { $nin: ids } })
+      .sort({ playCount: -1, _id: 1 })
+      .limit(10 - tracks.length);
+    tracks.push(...fallback);
+  }
+
   res.json(tracks);
 }
 
 module.exports = {
   listTracks,
+  listGenres,
   getTrack,
   createTrack,
   updateTrack,

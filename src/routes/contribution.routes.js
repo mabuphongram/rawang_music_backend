@@ -1,5 +1,5 @@
 const express = require("express");
-const { auth, requireActiveSubscription } = require("../middleware/auth");
+const { auth } = require("../middleware/auth");
 const { contributionUpload } = require("../middleware/upload");
 const {
   createContribution,
@@ -16,8 +16,8 @@ const contributionFiles = contributionUpload.fields([
   { name: "karaoke", maxCount: 1 },
 ]);
 
-// Login + active subscription required: expired accounts must renew first.
-router.post("/", auth(true), requireActiveSubscription, contributionFiles, createContribution);
+// Login required. Community uploads are no longer tied to a subscription.
+router.post("/", auth(true), contributionFiles, createContribution);
 // Admin portal endpoints (portal is a trusted internal tool, same as /tracks).
 router.get("/", listContributions);
 router.get("/:id", getContribution);

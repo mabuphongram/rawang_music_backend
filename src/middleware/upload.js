@@ -75,9 +75,22 @@ const ownerRequestUpload = multer({
   fileFilter: imageOnly,
 });
 
+// Premium-album payment proofs: screenshots can be larger than avatars.
+const MAX_PAYMENT_SCREENSHOT_MB = Number(
+  process.env.MAX_PAYMENT_SCREENSHOT_MB || 8
+);
+
+const paymentScreenshotUpload = multer({
+  storage,
+  limits: { fileSize: MAX_PAYMENT_SCREENSHOT_MB * 1024 * 1024, files: 1 },
+  fileFilter: imageOnly,
+});
+
 module.exports = upload;
 module.exports.upload = upload;
 module.exports.contributionUpload = contributionUpload;
 module.exports.ownerRequestUpload = ownerRequestUpload;
+module.exports.paymentScreenshotUpload = paymentScreenshotUpload;
 module.exports.MAX_CONTRIBUTION_MB = MAX_CONTRIBUTION_MB;
 module.exports.MAX_AVATAR_MB = MAX_AVATAR_MB;
+module.exports.MAX_PAYMENT_SCREENSHOT_MB = MAX_PAYMENT_SCREENSHOT_MB;

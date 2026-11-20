@@ -24,7 +24,11 @@ async function listMessages(req, res) {
 
 async function createMessage(req, res) {
   try {
-    const { senderName, message, isUser } = req.body;
+    const { message, isUser } = req.body;
+    const senderName =
+      req.user?.name?.trim() ||
+      (req.body.senderName || "").trim() ||
+      "Rawang Music Lover";
     const newMessage = await ChatMessage.create({ senderName, message, isUser });
     
     // Broadcast to connected clients

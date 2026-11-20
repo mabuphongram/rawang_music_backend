@@ -14,7 +14,14 @@ const albumSchema = new mongoose.Schema(
     coverImage: { type: String, default: "" },
     releaseYear: { type: Number, required: true },
     description: { type: String, default: "" },
+    isPremium: { type: Boolean, default: false },
+    // One-time price in MMK. Ignored for free albums.
+    price: { type: Number, default: 0, min: 0 },
     trackCount: { type: Number, default: 0 },
+    // Lower numbers appear first in the admin portal and the Android app.
+    order: { type: Number, default: 0 },
+    // Unpublished albums stay in the admin catalogue but are hidden from the app.
+    isPublished: { type: Boolean, default: true },
   },
   { timestamps: true }
 );
