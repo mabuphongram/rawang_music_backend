@@ -14,6 +14,8 @@ const singerSchema = new mongoose.Schema(
       facebook: { type: String, default: "" },
       tiktok: { type: String, default: "" },
     },
+    // Manual display order. Lower values appear first.
+    displayOrder: { type: Number, default: 0, index: true },
   },
   { timestamps: true }
 );

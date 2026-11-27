@@ -4,6 +4,7 @@ const {
   listSingers,
   getSinger,
   createSinger,
+  reorderSingers,
   updateSinger,
   deleteSinger,
 } = require("../controllers/singer.controller");
@@ -11,6 +12,7 @@ const {
 const router = express.Router();
 
 router.get("/", listSingers);
+router.put("/reorder", reorderSingers);
 router.get("/:id", getSinger);
 router.post("/", upload.single("avatar"), createSinger);
 router.put("/:id", upload.single("avatar"), updateSinger);

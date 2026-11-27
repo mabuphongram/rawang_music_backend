@@ -55,12 +55,41 @@ async function getAlbum(req, res) {
 }
 
 async function createAlbum(req, res) {
-  const album = new Album(albumPayload(req.body));
+  const payload = albumPayload(req.body);
+  if (payload.order === undefined) {
+    const last = await Album.findOne().sort({ order: -1 }).select("order").lean();
+    payload.order = Number.isFinite(last?.order) ? last.order + 1 : 0;
+  }
+  const album = new Album(payload);
   await album.validate();
   await uploadCoverImage(album, req.file);
   await album.save();
   if (album.isPublished) notifyAlbumCreated(album);
   res.status(201).json(album);
+}
+
+async function reorderAlbums(req, res) {
+  const ids = Array.isArray(req.body?.ids) ? req.body.ids.map(String) : [];
+  if (ids.length === 0) {
+    return res.status(400).json({ error: "ids array is required" });
+  }
+
+  const found = await Album.find({ _id: { $in: ids } }).select("_id").lean();
+  if (found.length !== ids.length) {
+    return res.status(400).json({ error: "One or more albums were not found" });
+  }
+
+  await Album.bulkWrite(
+    ids.map((id, index) => ({
+      updateOne: {
+        filter: { _id: id },
+        update: { $set: { order: index } },
+      },
+    }))
+  );
+
+  const albums = await Album.find().sort({ order: 1, createdAt: 1 });
+  res.json(albums);
 }
 
 async function updateAlbum(req, res) {
@@ -80,4 +109,11 @@ async function deleteAlbum(req, res) {
   res.status(204).send();
 }
 
-module.exports = { listAlbums, getAlbum, createAlbum, updateAlbum, deleteAlbum };
+module.exports = {
+  listAlbums,
+  getAlbum,
+  createAlbum,
+  reorderAlbums,
+  updateAlbum,
+  deleteAlbum,
+};

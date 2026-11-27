@@ -30,7 +30,7 @@ function notifyTrackCreated(track) {
 function notifySingerCreated(singer) {
   send({
     title: `New singer: ${clip(singer.name, 80)}`,
-    body: "A new artist is now on Rawang Melodies.",
+    body: "A new artist is now on Rvwang Melodies.",
     data: { type: "singer", id: String(singer._id) },
   });
 }

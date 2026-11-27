@@ -105,7 +105,7 @@ async function attachStats(docs) {
 }
 
 async function listSingers(req, res) {
-  const singers = await Singer.find().sort({ createdAt: -1 });
+  const singers = await Singer.find().sort({ displayOrder: 1, createdAt: -1 });
   await attachStats(singers);
   res.json(singers);
 }
@@ -119,10 +119,37 @@ async function getSinger(req, res) {
 
 async function createSinger(req, res) {
   const payload = await withAvatar(req.body, req.file);
-  const singer = await Singer.create(payload);
+  const last = await Singer.findOne().sort({ displayOrder: -1 }).select("displayOrder").lean();
+  const displayOrder = Number.isFinite(last?.displayOrder) ? last.displayOrder + 1 : 0;
+  const singer = await Singer.create({ ...payload, displayOrder });
   await attachStats(singer);
   notifySingerCreated(singer);
   res.status(201).json(singer);
+}
+
+async function reorderSingers(req, res) {
+  const ids = Array.isArray(req.body?.ids) ? req.body.ids.map(String) : [];
+  if (ids.length === 0) {
+    return res.status(400).json({ error: "ids array is required" });
+  }
+
+  const found = await Singer.find({ _id: { $in: ids } }).select("_id").lean();
+  if (found.length !== ids.length) {
+    return res.status(400).json({ error: "One or more singers were not found" });
+  }
+
+  await Singer.bulkWrite(
+    ids.map((id, index) => ({
+      updateOne: {
+        filter: { _id: id },
+        update: { $set: { displayOrder: index } },
+      },
+    }))
+  );
+
+  const singers = await Singer.find().sort({ displayOrder: 1, createdAt: -1 });
+  await attachStats(singers);
+  res.json(singers);
 }
 
 async function updateSinger(req, res) {
@@ -142,4 +169,11 @@ async function deleteSinger(req, res) {
   res.status(204).send();
 }
 
-module.exports = { listSingers, getSinger, createSinger, updateSinger, deleteSinger };
+module.exports = {
+  listSingers,
+  getSinger,
+  createSinger,
+  reorderSingers,
+  updateSinger,
+  deleteSinger,
+};
